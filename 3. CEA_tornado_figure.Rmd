@@ -1,0 +1,384 @@
+---
+title: "CEA-tornado figure"
+author: "Xian Zhang"
+date: "2024-01-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars}
+library(ggplot2)
+library(tidyverse)
+library(haven)
+library(dplyr)
+library(stringr)
+library(patchwork)
+library(gridExtra)
+library(plotrix)
+library(ggbreak)
+library(patchwork)
+library(break)
+
+```
+
+
+```{r pressure, echo=FALSE}
+tornado_diagram <- function(res, outcome, base_case, show_values = c("none", "axis", "attached"), outcome_labeller = scales::label_number()) {
+  show_values <- match.arg(show_values)
+  
+  data_prep <- res |>
+    group_by(.param) |>
+    mutate(
+      .OUTCOME_DIFF  = {{outcome}} - base_case,
+      .OUTCOME_RANGE = max(c(base_case, {{outcome}})) - min(c(base_case, {{outcome}})),
+      .POSITION      = if_else(prod(sign(.OUTCOME_DIFF)) == 1, "dodge", "stack"),
+      .VALUE_FMT     = .value,
+      .LABELS        = if (show_values == "axis") paste0(.param, " [", .VALUE_FMT[.dir == "lower"], ", ", .VALUE_FMT[.dir == "upper"], "]") else .param
+    )
+  
+  shift_trans <- scales::trans_new(
+    name      = "shift",
+    transform = function(x) x - base_case,
+    inverse   = function(x) x + base_case
+  )
+  
+  p <- ggplot(
+    data_prep,
+    aes(
+      x    = fct_reorder(.LABELS, .OUTCOME_RANGE), # Show in order of importance
+      y    = {{outcome}},
+      fill = .dir)
+  ) +
+    geom_blank() + # Necessary to preserve the order of parameters
+    geom_col(
+      data     = ~ filter(., .POSITION == "dodge"),
+      position = "dodge"
+    ) +
+    geom_col(
+      data     = ~ filter(., .POSITION == "stack"),
+      position = "stack"
+    ) +
+    scale_y_continuous(trans = shift_trans, labels = outcome_labeller) +
+    labs(x = "Parameter", y = "Outcome") +
+    coord_flip(
+    ) + 
+    geom_hline(yintercept = inmb_base_case,linetype = "dashed",  color = "black",size=0.5)
+  
+  if (show_values == "attached")
+    p +
+      geom_text(
+        aes(label = .VALUE_FMT)
+      )
+  else
+    p
+  
+}
+```
+
+
+# tiv no Health
+```{r pressure, echo=FALSE}
+
+inmb_base_case <- 4966.7
+
+res <- data.frame(
+  .param = rep(
+    c(
+        "Vaccine effectiveness for TIV" ,
+        "Utility for healthy people" ,
+        "Outpatient visit number for No programme" ,
+        "Utility loss for outpatient visit" ,
+        "Vaccine administration fee" ,
+        "Vaccine coverage rate" ,
+        "Vaccine government price" ,
+        "Utility loss for inpatient visit" ,
+        "Inpatienet visit number for No programme" ,
+        "Inpatient direct cost" ,
+        "Vaccine market price" ,
+        "Basecase mortality rate" ,
+        "Outpatient direct cost" ,
+        "Inpatient direct nonmedical cost" ,
+        "OTC cost" ,
+        "Excess mortality rate" ,
+        "Outpatient non-medical cost" 
+    ),
+    each = 2
+  ),
+  .dir = rep(c("lower", "upper"), times = 17),
+  .value = c(
+    "0.1%",
+    "67.4%",
+    "-10%",
+    "+10%",
+   "-20%",
+    "+20%",
+    "-10%",
+    "+10%",
+    "-20%",
+    "+20%",
+    "25%",
+    "75%",
+    "-20%",
+    "+20%",
+    "-10%",
+    "+10%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%", 
+    "+20%"
+  ),
+  INMB = c(
+    2511.5835,
+    228463.64,
+    3356.947,
+    9542.4121,
+    4137.2266,
+    6188.9097,
+    5992.4946,
+    4240.7109,
+    5660.771,
+    4272.5537,
+    6041.8613,
+    4719.2788,
+    5617.1245,
+    4316.1992,
+    5664.9292,
+    4421.6479,
+    4757.479,
+    5175.8442,
+    4782.2441,
+    5151.0796,
+    4861.9487,
+    5071.377,
+    4924.5884,
+    5009.4609,
+    4935.6538,
+    4997.6709,
+    4941.896,
+    4991.4268,
+    4963.313,
+    4970.0122,
+    4963.4619,
+    4969.8643,
+    4963.6787,
+    4969.645
+  )
+)
+
+
+p1 <- tornado_diagram(
+  res,
+  INMB,
+  inmb_base_case,
+  show_values = "axis",
+  outcome_labeller = scales::dollar_format(prefix = "", scale = 1)
+) +
+  labs(y = "ICER (USD/QALY)") +
+  scale_fill_discrete("",  labels = c("Lower", "Upper")) +
+  theme_minimal() +
+  theme(legend.position = "top") +
+  ggtitle("TIV vs. No Programme (Health System Perspective)") +
+  scale_y_break(c(35000,100000), scales = "free")  # +
+  #theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+
+
+p1 <- p1 +expand_limits(x = c(0.4, 18.6)) +
+  annotate("text", x =17, y = 6800, label = "4966·7 USD/QALY", hjust = 0.1, vjust = -1.5, color = "black",size=3,fond="Helvetica") +
+    geom_hline(yintercept = 4966.7 , color = "blue",size=0.5) + 
+    geom_hline(yintercept = 22539.9 , color = "red",size=0.5) +
+      geom_hline(yintercept = 33809.9 , color = "black",size=0.5) 
+
+
+p1 <- p1 + annotate("text", x = 5, y = 16539.9, label = "1-folder GDP:", 
+           color = "black", size = 3, fontface = "italic")  + 
+          annotate("text", x = 5, y = 128809.9, label = "1·5-folder GDP:", 
+           color = "black", size = 3, fontface = "italic") + 
+          annotate("text", x = 4, y = 16539.9, label = "22,539·9 USD/QALY", 
+           color = "black", size = 3, fontface = "italic")  + 
+          annotate("text", x = 4, y = 128809.9, label = "33,809·9 USD/QALY", 
+           color = "black", size = 3, fontface = "italic")
+  
+p1
+
+```
+
+# TIV vs. no: Societal
+```{r pressure, echo=FALSE}
+
+inmb_base_case <-  4750.8
+
+ res <- data.frame(
+  .param = rep(
+    c(
+        "Vaccine effectiveness for TIV" ,
+        "Utility for healthy people" ,
+        "Outpatient visit number for No programme" ,
+        "Utility loss for outpatient visit" ,
+        "Vaccine administration fee" ,
+        "Vaccine coverage rate" ,
+        "Vaccine government price" ,
+        "Utility loss for inpatient visit" ,
+        "Inpatienet visit number for No programme" ,
+        "Inpatient direct cost" ,
+        "Vaccine market price" ,
+        "Basecase mortality rate" ,
+        "Inpatient indirect cost" ,
+        "Outpatient direct cost" ,
+        "Inpatient direct nonmedical cost" ,
+        "Outpatient indirect cost" ,
+        "OTC cost" ,
+        "Excess mortality rate" ,
+        "Outpatient non-medical cost" 
+    ),
+    each = 2
+  ),
+  .dir = rep(c("lower", "upper"), times = 19),
+  .value = c(
+    "0.1%",
+    "67.4%",
+    "-10%",
+    "+10%",
+    "-20%",
+    "+20%",
+    "-10%",
+    "+10%",
+    "-20%",
+    "+20%",
+    "25%",
+    "75%",
+    "-20%",
+    "+20%",
+    "-10%",
+    "+10%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%",
+    "+20%",
+    "-20%", 
+    "+20%",
+    "-20%", 
+    "+20%",
+    "-20%", 
+    "+20%"   
+  ),
+  INMB = c(
+  2295.8625,
+    228247.66,
+    3211.0608,
+    9127.7178,
+    3948.6128,
+    5932.9419,
+    5732.0732,
+    4056.4185,
+    5444.9307,
+    4056.7124,
+    5840.9385,
+    4500.8589,
+    5401.2842,
+    4100.3584,
+    5418.7427,
+    4229.4922,
+    4507.3501,
+    4994.2886,
+    4566.4014,
+    4935.2378,
+    4646.1074,
+    4855.5356,
+    4710.5757,
+    4791.7598,
+    4716.5327,
+    4785.1079,
+    4719.813,
+    4781.8291,
+    4726.0552,
+    4775.5854,
+    4741.9395,
+    4759.7021,
+    4747.4697,
+    4754.1709,
+    4747.7603,
+    4753.8838,
+    4747.8369,
+    4753.8032
+  )
+)
+
+p2 <-  tornado_diagram(
+  res,
+  INMB,
+  inmb_base_case,
+  show_values = "axis",
+  outcome_labeller = scales::dollar_format(prefix = "", scale = 1)
+) +
+  labs(y = "ICER (USD/QALY)") +
+  scale_fill_discrete("",  labels = c("Lower", "Upper")) +
+  theme_minimal() +
+  theme(legend.position = "top") +
+  ggtitle("TIV vs. No Programme (Social Perspective)") +
+  scale_y_break(c(35000,100000), scales = "free")  # +
+   
+p2 <- p2 +expand_limits(x = c(2, 20.6)) +
+  annotate("text", x =19, y = 7000, label = "4750.8 USD/QALY", hjust = 0.1, vjust = -1.5, color = "black",size=3,fond="Helvetica") +
+    geom_hline(yintercept = 4750.8 , color = "blue",size=0.5) + 
+    geom_hline(yintercept = 22539.9 , color = "red",size=0.5) +
+      geom_hline(yintercept = 33809.9 , color = "black",size=0.5) 
+
+
+
+p2 <- p2 + annotate("text", x = 5, y = 16539.9, label = "1-folder GDP:", 
+           color = "black", size = 3, fontface = "italic")  + 
+          annotate("text", x = 5, y = 128809.9, label = "1·5-folder GDP:", 
+           color = "black", size = 3, fontface = "italic") + 
+          annotate("text", x = 4, y = 16539.9, label = "22,539·9 USD/QALY", 
+           color = "black", size = 3, fontface = "italic")  + 
+          annotate("text", x = 4, y = 128809.9, label = "33,809·9 USD/QALY", 
+           color = "black", size = 3, fontface = "italic")
+  
+p2
+
+
+```
+
+
+```{r pressure, echo=FALSE}
+# combine figure: figure 1  
+
+combined_plot <- p1 / p2  
+print(combined_plot)
+
+ggsave("figure_1.png", plot = combined_plot, width = 10, height = 10)
+ggsave("figure_1.tiff", width = 10, height = 10)
+
+
+```
+
