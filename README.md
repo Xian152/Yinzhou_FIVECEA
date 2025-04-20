@@ -39,7 +39,7 @@ project-folder/
 
 ---
 
-## 💻 Software Requirements
+## Software Requirements
 - **STATA version**: ≥ 13
 - **R version**: ≥ 4.2
 
@@ -47,3 +47,10 @@ Before running the scripts, please install the required R packages：
 ```{r cars}
 install.packages(c("heemod", "BCEA", "dplyr", "ggplot2", "reshape2", "readr", "tidyverse", "haven", "stringr", "patchwork", "gridExtra", "plotrix", "ggbreak", "break"))
 ```
+
+## License
+
+This code is shared solely for the purpose of academic transparency and peer-review.  
+It is licensed under a [Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License](https://creativecommons.org/licenses/by-nc-nd/4.0/).
+
+You may **view and cite**, but **not reuse, modify, or redistribute** the code without permission.
