@@ -17,13 +17,13 @@ We evaluated the cost-effectiveness of a government-funded trivalent influenza v
 ## Repository Structure
 
 project-folder/
-├── 1. CEA_basecase_scenario.do           # define basecase analysis and scenario analyses
-├── 2. Single_parameter_analyses.do       # sensitivity analyses: single parameter analysis
-├── 3. CEA_tornado_figure.Rmd             # sensitivity analyses: tornado figure for single parameter analysis
-├── 4. Monte_Carlo_Samplying.do           # sensitivity analyses: monte carlo samplying and analysis
-├── ceaparameter.xlsx                     # parameter input
-├── LICENSE
-└── README.md
+├── 1. CEA_basecase_scenario.do       # Define base-case and scenario analyses 
+├── 2. Single_parameter_analyses.do   # Sensitivity analysis: single parameters 
+├── 3. CEA_tornado_figure.Rmd         # Plot tornado figure 
+├── 4. Monte_Carlo_Sampling.do        # Probabilistic sensitivity analysis (PSA)  
+├── ceaparameter.xlsx                 # Model input parameters 
+├── LICENSE                           # License file 
+└── README.md                         # Project introduction  
 
 
 ## Method Summary
